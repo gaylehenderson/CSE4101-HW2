@@ -179,7 +179,7 @@ def get_meta_scores(pop):
     Parameters:
     pop (list): list of Persons
     """
-    meta_scores = [p.meta_scores for p in pop]
+    meta_scores = [p.score for p in pop]
 
     # TODO: implement
         
@@ -192,7 +192,7 @@ def get_ground_truth(pop):
     Parameters:
     pop (list): list of Persons
     """
-    recid = [p.recid for p in pop]
+    recid = [1 if p.recidivist else 0 for p in pop]
 
     # TODO: implement
         
@@ -264,8 +264,8 @@ def make_prediction_metascore(meta_scores, meta_threshold):
     meta_scores (list): list of strings representing the meta scores (i.e. "High")
     meta_threshold (string): threshold representing the lower bound on a positive prediction
     """
-
-    preds = [1 if score >= meta_threshold else 0 for score in meta_scores]
+    order = {"Low": 0, "Medium": 1, "High": 2}
+    preds = [1 if order[score] >= order[meta_threshold] else 0 for score in meta_scores]
 
     # TODO: implement
                 
@@ -284,7 +284,9 @@ def compute_cost(predictions, ground_truth, costfp):
     for pred, ground_truth_val in zip(predictions, ground_truth):
         if pred == 1 and ground_truth_val == 0:
             cost += costfp
-    return cost
+        elif pred == 0 and ground_truth_val == 1:
+            cost += 1
+    return cost/len(predictions)
 
     # TODO: implement
 
@@ -313,8 +315,8 @@ def get_ave_costs(meta_scores, ground_truth, costs):
     ground_truth (list): list of ground truth values 
     costs (list): list of ints representing the various false positive costs 
     """
-
-    ave_costs = [compute_cost(meta_scores,ground_truth,costfp) for costfp in costs]
+    preds = make_prediction_metascore(meta_scores, "Medium")
+    ave_costs = get_ave_costs_preds(preds, ground_truth, costs)
 
     # TODO: implement
     
@@ -329,13 +331,11 @@ def construct_feature_matrix(population):
     """
 
     x = np.zeros((len(population), 6), dtype=int)
-    for i, person in enumerate(population):
-        x[i, 0] = person.age
-        x[i, 1] = person.sex
-        x[i, 2] = person.race
-        x[i, 3] = person.priors
-        x[i, 4] = person.education
-        x[i, 5] = person.income
+    for i, p in enumerate(population):
+        x[i] = [p.age, p.is_afam, p.priors,
+        p.juvenile_felony_count,
+        p.juvenile_misdemeanor_count,
+        p.juvenile_other_count]
 
     # TODO: populate the feature matrix x and return it
 
@@ -391,10 +391,4 @@ def get_weights(population, w):
     
 
     # TODO: implement
-    for i, person in enumerate(population):
-        if person.race == "African American":
-            weights[i] = w
-        else:
-            weights[i] = 1
-
-    return weights
+    return np.array([w if p.is_afam else 1 for p in population], dtype=float)
