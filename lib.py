@@ -315,7 +315,7 @@ def get_ave_costs(meta_scores, ground_truth, costs):
     ground_truth (list): list of ground truth values 
     costs (list): list of ints representing the various false positive costs 
     """
-    preds = make_prediction_metascore(meta_scores, "Medium")
+    preds = make_prediction_metascore(meta_scores, "High")
     ave_costs = get_ave_costs_preds(preds, ground_truth, costs)
 
     # TODO: implement
@@ -332,7 +332,7 @@ def construct_feature_matrix(population):
 
     x = np.zeros((len(population), 6), dtype=int)
     for i, p in enumerate(population):
-        x[i] = [p.age, p.is_afam, p.priors,
+        x[i] = [p.age, p.is_felony, p.priors,
         p.juvenile_felony_count,
         p.juvenile_misdemeanor_count,
         p.juvenile_other_count]
